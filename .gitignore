@@ -52,6 +52,6 @@ Mkfile.old
 dkms.conf
 
 build/
-!bin
+!bulid/bin/
 .vscode/
 .cache/
