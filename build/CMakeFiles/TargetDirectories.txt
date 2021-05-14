@@ -1,0 +1,3 @@
+D:/VS-Code/Vs-Code-C/Semester_4/computerNetwork/DNS/build/CMakeFiles/rebuild_cache.dir
+D:/VS-Code/Vs-Code-C/Semester_4/computerNetwork/DNS/build/CMakeFiles/dnsRelay.dir
+D:/VS-Code/Vs-Code-C/Semester_4/computerNetwork/DNS/build/CMakeFiles/edit_cache.dir
