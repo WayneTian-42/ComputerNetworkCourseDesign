@@ -30,6 +30,7 @@
 
 # Executables
 *.exe
+!dnsRelay.exe
 *.out
 *.app
 *.i*86
@@ -52,6 +53,5 @@ Mkfile.old
 dkms.conf
 
 build/
-!dnsRelay.exe
 .vscode/
 .cache/
