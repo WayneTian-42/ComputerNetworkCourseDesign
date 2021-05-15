@@ -1,7 +1,0 @@
-[
-{
-  "directory": "D:/VS-Code/Vs-Code-C/Semester_4/computerNetwork/DNS/build",
-  "command": "C:\\mingw64\\bin\\gcc.exe   -g -std=c11 -o CMakeFiles\\dnsRelay.dir\\dns0.c.obj -c D:\\VS-Code\\Vs-Code-C\\Semester_4\\computerNetwork\\DNS\\dns0.c",
-  "file": "D:/VS-Code/Vs-Code-C/Semester_4/computerNetwork/DNS/dns0.c"
-}
-]

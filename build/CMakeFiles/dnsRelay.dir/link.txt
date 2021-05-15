@@ -1,3 +1,0 @@
-D:\Cmake\bin\cmake.exe -E rm -f CMakeFiles\dnsRelay.dir/objects.a
-C:\mingw64\bin\ar.exe cr CMakeFiles\dnsRelay.dir/objects.a @CMakeFiles\dnsRelay.dir\objects1.rsp
-C:\mingw64\bin\gcc.exe -g -Wl,--whole-archive CMakeFiles\dnsRelay.dir/objects.a -Wl,--no-whole-archive -o bin\dnsRelay.exe -Wl,--out-implib,lib\libdnsRelay.dll.a -Wl,--major-image-version,0,--minor-image-version,0 @CMakeFiles\dnsRelay.dir\linklibs.rsp
