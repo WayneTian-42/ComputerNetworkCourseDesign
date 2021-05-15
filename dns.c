@@ -28,7 +28,7 @@ typedef struct
 } USER;
 
 char DNSServer[] = "10.3.9.5";
-char localFile[] = "dnsrelay.txt";
+char localFile[] = "D:\\VS-Code\\Vs-Code-C\\Semester_4\\computerNetwork\\DNS\\dnsrelay.txt";
 int recordNum;
 SOCKET sock;
 SOCKADDR_IN clientAddr, serverAddr, tempAddr;
@@ -90,7 +90,6 @@ int main()
             int pos = searchLocal(domain + 1, recordNum);
             if ((pos != -1) && (message[messageLength - 3] == 1))
             {
-                printf("fuck0");
                 sendBack(message, pos, messageLength);
             }
             else
@@ -170,7 +169,7 @@ int readFile()
             DNSrecord[num].ip[0] = (char *)malloc(size + 1);
             DNSrecord[num].sum = 1;
             DNSrecord[num].recordTime = time(NULL);
-            DNSrecord[num].ttl = 3600;  //默认为一小时
+            DNSrecord[num].ttl = 10;  //默认为一小时
             strcpy(DNSrecord[num].ip[0], buffer);
             flg = 1;
         }
@@ -285,6 +284,13 @@ void sendBack(char *message, int pos, int length)
 
         unsigned int ip = (unsigned int)inet_addr(DNSrecord[pos].ip[i]);
         memcpy(sendMessage + length + i * 16 + 12, &ip, sizeof(ip));
+
+        puts("message:");
+        for (int ii = 0; ii < length + i * 16; ii++)
+        {
+            printf("%d ", (int)sendMessage[ii]);
+        }
+        putchar('\n');
     }
 
     int sendLength = sendto(sock, sendMessage, length + i * 16, 0, (SOCKADDR *)&tempAddr, sizeof(tempAddr));
