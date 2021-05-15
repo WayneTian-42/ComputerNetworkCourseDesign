@@ -15,7 +15,11 @@ add_executable(dnsRelay "")
 
 target_sources(dnsRelay
   PRIVATE
+<<<<<<< HEAD
     dns.c
+=======
+    dns0.c
+>>>>>>> 9e9ca408c5e70fad356045ff1859cb158b3c6b18
   )
 
 if(WIN32)
