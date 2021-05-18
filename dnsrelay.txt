@@ -207,4 +207,4 @@
 0.0.0.0 ad4.sina.com.cn
 123.127.134.10 www.163daohang.com.cn
 10.3.181.7 auth.bupt.edu.cn
-123.127.134.10 www.yynlovetwyvm5451.com
+123.127.134.10 www.yynlovetwy12651.com

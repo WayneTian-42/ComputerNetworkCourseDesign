@@ -1,3 +1,5 @@
+#define _WINSOCK_DEPRECATED_NO_WARNINGS
+#define _CRT_SECURE_NO_WARNINGS
 #include <WinSock2.h>
 #include <minwindef.h>
 #include <stdio.h>
@@ -9,7 +11,7 @@
 #define PORT 53
 #define MESSAGESIZE 1024
 #define HEADERSIZE 12
-#define SIO_UDP_CONNRESET _WSAIOW(IOC_VENDOR, 12)
+//#define SIO_UDP_CONNRESET _WSAIOW(IOC_VENDOR, 12)
 
 //查询记录
 typedef struct
@@ -27,7 +29,7 @@ typedef struct
     unsigned short originalID;
 } USER;
 
-char DNSServer[] = "10.3.9.5";
+char DNSServer[] = "192.168.43.153";
 char localFile[] = "D:\\VS-Code\\Vs-Code-C\\Semester_4\\computerNetwork\\DNS\\dnsrelay.txt";
 int recordNum;
 SOCKET sock;
@@ -83,7 +85,7 @@ int main()
             printf("1\n");
             //获取想要查询的域名
             getDomain(message + HEADERSIZE, domain);
-            for (int i = 1; domain[i] != 0; i++)
+            for (int i = 0; domain[i] != 0; i++)
                 printf("%c", domain[i]);
             printf("\n");
             //判断本地是否缓存该域名
@@ -163,7 +165,8 @@ int readFile()
     while (fscanf(fp, "%s", buffer) != EOF)
     {
         int size = strlen(buffer);
-
+        /* if (buffer[0] < '0' || buffer[0] > '9')
+            continue; */
         if (!flg)  //记录ip地址
         {
             DNSrecord[num].ip[0] = (char *)malloc(size + 1);
@@ -207,13 +210,13 @@ void getDomain(char *message, char *domain)
     {
         int i = 1;
         for (; i <= nextLength; i++)
-            domain[i + totalLength] = message[i + totalLength];
+            domain[i + totalLength - 1] = message[i + totalLength];
         // tmp记录next，因为马上next要更新
         int tmp = nextLength;
         nextLength = message[totalLength + nextLength + 1];
         //域名以00结尾，非0就可以在输出时用.来代替
         if (nextLength)
-            domain[i + totalLength] = '.';
+            domain[i + totalLength - 1] = '.';
         else
             break;
         totalLength += tmp + 1;
@@ -221,7 +224,7 @@ void getDomain(char *message, char *domain)
 }
 int searchLocal(char *domain, int num)
 {
-    int left = 0, right = num;
+    int left = 0, right = num - 1;
     //二分查找
     while (left <= right)
     {
@@ -325,15 +328,6 @@ void sendToServer(char *message, int length)
 }
 void processMessage(char *message)
 {
-    unsigned int pos;
-    for (pos = 0; pos < 1000; pos++)
-        if (DNSrecord[pos].ttl < difftime(time(NULL), DNSrecord[pos].recordTime))
-            break;
-    if (pos >= 1000)
-        return;
-    else
-        clearRecord(pos);
-
     char rcode, type;
     short anCount, finalType;
     memcpy(&rcode, message + 3, sizeof(rcode));
@@ -353,7 +347,17 @@ void processMessage(char *message)
     if (!(rcode & 0x0F) || !anCount)
         return;
     if (finalType == 1)
+    {
+        unsigned int pos;
+        for (pos = 0; pos < recordNum; pos++)
+            if (DNSrecord[pos].ttl < difftime(time(NULL), DNSrecord[pos].recordTime))
+                break;
+        if (pos >= 1000)
+            return;
+        else
+            clearRecord(pos);
         ipv4Message(message, pos, anCount, off + 4);  //加4是type和class字段，之后就是name（指针）
+    }
     else
         return;
 }
@@ -361,9 +365,11 @@ void processMessage(char *message)
 void ipv4Message(char *message, int pos, int anCount, int off)
 {
     char domain[256];
-    getDomain(message, domain);
+    memset(domain, 0, sizeof(domain));
+    getDomain(message + HEADERSIZE, domain);
     DNSrecord[pos].recordTime = time(NULL);
-    DNSrecord[pos].domain = malloc(sizeof(char) * (strlen(domain) + 1));
+    int size = strlen(domain);
+    DNSrecord[pos].domain = (char *)malloc(sizeof(char) * (strlen(domain) + 1));
     strcpy(DNSrecord[pos].domain, domain);
     if (pos > recordNum)
         recordNum++;
@@ -385,7 +391,7 @@ void ipv4Message(char *message, int pos, int anCount, int off)
             memcpy(&addrtmp.sin_addr.s_addr, iptmp, sizeof(iptmp));
             memcpy(ip, inet_ntoa(addrtmp.sin_addr), sizeof(ip));
 
-            DNSrecord[pos].ip[i] = malloc(strlen(ip));
+            DNSrecord[pos].ip[i] = (char *)malloc(strlen(ip));
             memcpy(DNSrecord[pos].ip[i], ip, sizeof(ip));
         }
         if (i)
@@ -393,6 +399,7 @@ void ipv4Message(char *message, int pos, int anCount, int off)
             DNSrecord[pos].sum += i;
         }
     }
+    qsort(DNSrecord, recordNum, sizeof(RECORD), cmp);
 }
 void recvMessage(char *message, int length)
 {
