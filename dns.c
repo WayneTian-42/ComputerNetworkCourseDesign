@@ -89,7 +89,7 @@ int main()
                 printf("%c", domain[i]);
             printf("\n");
             //判断本地是否缓存该域名
-            int pos = searchLocal(domain + 1, recordNum);
+            int pos = searchLocal(domain, recordNum);
             if ((pos != -1) && (message[messageLength - 3] == 1))
             {
                 sendBack(message, pos, messageLength);
@@ -189,9 +189,15 @@ int readFile()
     qsort(DNSrecord, num, sizeof(RECORD), cmp);
     return num;
 }
+//先这么改，不行就修改二分算法
 int cmp(const void *a, const void *b)
 {
-    return strcmp(((RECORD *)a)->domain, ((RECORD *)b)->domain);
+    if (((RECORD *)a)->domain != NULL && ((RECORD *)b)->domain != NULL)
+        return strcmp(((RECORD *)a)->domain, ((RECORD *)b)->domain);
+    else if (!((RECORD *)a)->domain)
+        return FALSE;
+    else
+        return FALSE;
 }
 int request(char *message)
 {
@@ -354,8 +360,6 @@ void processMessage(char *message)
                 break;
         if (pos >= 1000)
             return;
-        else
-            clearRecord(pos);
         ipv4Message(message, pos, anCount, off + 4);  //加4是type和class字段，之后就是name（指针）
     }
     else
@@ -364,19 +368,10 @@ void processMessage(char *message)
 //这里会出现莫名其妙的bug
 void ipv4Message(char *message, int pos, int anCount, int off)
 {
-    char domain[256];
-    memset(domain, 0, sizeof(domain));
-    getDomain(message + HEADERSIZE, domain);
-    DNSrecord[pos].recordTime = time(NULL);
-    int size = strlen(domain);
-    DNSrecord[pos].domain = (char *)malloc(sizeof(char) * (strlen(domain) + 1));
-    strcpy(DNSrecord[pos].domain, domain);
-    if (pos > recordNum)
-        recordNum++;
     short type;
     char iptmp[4] = {0}, ip[16] = {0};
-    int i;
-    for (i = 0; i < anCount && i < 20; i++, off += 16)
+    int i, count = 0;
+    for (i = 0; i < anCount && count < 20; i++, off += 16)
     {
         memcpy(&type, message + off + 4, sizeof(type));
         if (type == 1)
@@ -391,14 +386,26 @@ void ipv4Message(char *message, int pos, int anCount, int off)
             memcpy(&addrtmp.sin_addr.s_addr, iptmp, sizeof(iptmp));
             memcpy(ip, inet_ntoa(addrtmp.sin_addr), sizeof(ip));
 
-            DNSrecord[pos].ip[i] = (char *)malloc(strlen(ip));
+            DNSrecord[pos].ip[i] = (char *)malloc((sizeof(char)) * (strlen(ip) + 1));
             memcpy(DNSrecord[pos].ip[i], ip, sizeof(ip));
-        }
-        if (i)
-        {
-            DNSrecord[pos].sum += i;
+            count++;
         }
     }
+    if (count)
+    {
+        char domain[256];
+        memset(domain, 0, sizeof(domain));
+        getDomain(message + HEADERSIZE, domain);
+        DNSrecord[pos].recordTime = time(NULL);
+        int size = strlen(domain);
+        DNSrecord[pos].domain = (char *)malloc(sizeof(char) * (strlen(domain) + 1));
+        strcpy(DNSrecord[pos].domain, domain);
+        if (pos > recordNum)
+            recordNum++;
+        DNSrecord[pos].sum = count;
+    }
+    else
+        clearRecord(pos);
     qsort(DNSrecord, recordNum, sizeof(RECORD), cmp);
 }
 void recvMessage(char *message, int length)
