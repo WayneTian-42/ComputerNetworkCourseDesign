@@ -99,7 +99,7 @@ int readFile(char *localFile)
 void outputByBit(char c)
 {
     unsigned char tmp = c;
-    printf("%x%x", tmp, tmp & 0x0f);
+    printf("%x%x  ", (tmp & 0xf0) >> 4, tmp & 0x0f);
 }
 void getHeader(HEADER *header, char *message)
 {

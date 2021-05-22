@@ -107,6 +107,23 @@ void sendBack(char *message, int pos, int length)
         printf("SEND to %s:%d(%dbytes)  ", inet_ntoa(tempAddr.sin_addr), ntohs(tempAddr.sin_port), sendLength);
         for (int i = 0; i < sendLength; i++)
             outputByBit(sendMessage[i]);
+
         /* printf("%x ", sendMessage[i]);*/
+        printf("\n\t");
+        printf("ID:");
+        outputByBit(sendMessage[0]);
+        outputByBit(sendMessage[1]);
+        printf("QR:%d, ", 1);
+        printf("OPCODE:%d, ", 0);
+        printf("AA:%d, ", 1);
+        printf("RD:%d, ", 0);
+        printf("RD:%d, ", 1);
+        printf("RA:%d, ", 1);
+        printf("Z:%d, ", 0);
+        printf("RCODE:%d\n\t", 0);
+        printf("QDCOUNT:%d, ", 1);
+        printf("ANCOUNT: %d, ", DNSrecord[pos].sum);
+        printf("NSCOUNT:%d, ", 0);
+        printf("ARCOUNT:%d\n", 0);
     }
 }

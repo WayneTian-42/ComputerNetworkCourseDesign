@@ -49,43 +49,38 @@ int main(int argc, char **argv)
         }
         memset(&header, 0, sizeof(header));
         getHeader(&header, message);
-        //判断是查询报文还是响应报文
+
         char domain[128];
-
-        //查询报文
         memset(domain, 0, sizeof(domain));
+        //获取想要查询的域名
         getDomain(message + HEADERSIZE, domain);
-        if (debugLevel >= 0)
-        {
-            outTime();
-            printf("%4d:  ", num++);
-            for (int i = 0; domain[i] != 0; i++)
-                printf("%c", domain[i]);
-            printf("\n");
-        }
 
-        if (request(message))
+        //判断是查询报文还是响应报文
+        if (!header.QR)
         {
-            //获取想要查询的域名
-
             //判断本地是否缓存该域名
             int pos = searchLocal(domain, recordNum);
+            if (debugLevel)
+            {
+                outTime();
+                printf("%4d:", num++);
+                if (pos == -1)
+                    printf("  ");
+                else
+                    printf("* ");
+                for (int i = 0; domain[i] != 0; i++)
+                    printf("%c", domain[i]);
+                printf("\n");
+            }
             if ((pos != -1) && (message[messageLength - 3] == 1))
-            {
                 sendBack(message, pos, messageLength);
-                if (debugLevel > 1) {}
-            }
             else
-            {
                 sendToServer(message, messageLength);
-            }
         }
         else  //响应报文
         {
-            //处理报文
             processMessage(message);
             recvMessage(message, messageLength);
-            // showIP(ip);
         }
     }
     return 0;
