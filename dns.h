@@ -1,5 +1,14 @@
 #pragma once
 #include <stdio.h>
 #include <stdlib.h>
+#include "init.h"
 
-void debug(int, char **);
+typedef _Bool bool;
+typedef unsigned long long ullsize_t;
+
+ullsize_t start;
+
+bool debug(int, char **);
+bool isIPAddress(char *);
+
+void outTime();

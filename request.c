@@ -1,3 +1,4 @@
+#include <stdio.h>
 #include "init.h"
 #include "request.h"
 #include "query.h"
@@ -68,7 +69,7 @@ void sendBack(char *message, int pos, int length)
     }
     else
     {
-        tmp = htons(0x8180);
+        tmp = htons(0x8580);
         memcpy(&sendMessage[2], &tmp, sizeof(tmp));
         tmp = htons(DNSrecord[pos].sum);
         memcpy(&sendMessage[6], &tmp, sizeof(tmp));
@@ -99,8 +100,13 @@ void sendBack(char *message, int pos, int length)
     }
 
     int sendLength = sendto(sock, sendMessage, length + i * 16, 0, (SOCKADDR *)&tempAddr, sizeof(tempAddr));
-    if (sendLength < 0) {}
-    else
+    if (sendLength < 0)
+        printf("#Error %d\n", WSAGetLastError());
+    else if (debugLevel > 1)
     {
+        printf("SEND to %s:%d(%dbytes)  ", inet_ntoa(tempAddr.sin_addr), ntohs(tempAddr.sin_port), sendLength);
+        for (int i = 0; i < sendLength; i++)
+            outputByBit(sendMessage[i]);
+        /* printf("%x ", sendMessage[i]);*/
     }
 }
