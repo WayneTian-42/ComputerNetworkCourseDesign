@@ -92,14 +92,14 @@ int readFile(char *localFile)
     }
     fclose(fp);
     printf("%d domains, occupy %d bytes memory\n", num, memory);
-    //快排，变为有序序列，便于查找
-    qsort(DNSrecord, num, sizeof(RECORD), cmp);
+    /*     //快排，变为有序序列，便于查找
+        qsort(DNSrecord, num, sizeof(RECORD), cmp); */
     return num;
 }
 void outputByBit(char c)
 {
     unsigned char tmp = c;
-    printf("%x%x  ", (tmp & 0xf0) >> 4, tmp & 0x0f);
+    printf("%x%x ", (tmp & 0xf0) >> 4, tmp & 0x0f);
 }
 void getHeader(HEADER *header, char *message)
 {
@@ -132,7 +132,7 @@ void getHeader(HEADER *header, char *message)
     header->ARCOUNT = ntohs(tmp);
 }
 //先这么改，不行就修改二分算法
-int cmp(const void *a, const void *b)
+/* int cmp(const void *a, const void *b)
 {
     if (((RECORD *)a)->domain != NULL && ((RECORD *)b)->domain != NULL)
         return strcmp(((RECORD *)a)->domain, ((RECORD *)b)->domain);
@@ -140,4 +140,4 @@ int cmp(const void *a, const void *b)
         return 1;
     else
         return 1;
-}
+} */

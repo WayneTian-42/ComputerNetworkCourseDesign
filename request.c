@@ -1,4 +1,5 @@
 #include <stdio.h>
+#include <string.h>
 #include "init.h"
 #include "request.h"
 #include "query.h"
@@ -36,7 +37,7 @@ int searchLocal(char *domain, int num)
 {
     int left = 0, right = num - 1;
     //二分查找
-    while (left <= right)
+    /* while (left <= right)
     {
         int mid = left + (right - left) / 2;
         if (strcmp(domain, DNSrecord[mid].domain) > 0)
@@ -45,6 +46,13 @@ int searchLocal(char *domain, int num)
             right = mid - 1;
         else
             return mid;
+    } */
+    for (int i = left; i < right; i++)
+    {
+        if (!DNSrecord[i].domain)
+            continue;
+        else if (!strcmp(domain, DNSrecord[i].domain))
+            return i;
     }
     return -1;
 }
@@ -116,7 +124,7 @@ void sendBack(char *message, int pos, int length)
         printf("QR:%d, ", 1);
         printf("OPCODE:%d, ", 0);
         printf("AA:%d, ", 1);
-        printf("RD:%d, ", 0);
+        printf("TC:%d, ", 0);
         printf("RD:%d, ", 1);
         printf("RA:%d, ", 1);
         printf("Z:%d, ", 0);

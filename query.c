@@ -1,8 +1,10 @@
+#include <stdio.h>
+#include <string.h>
 #include "init.h"
 #include "request.h"
 #include "query.h"
 
-int changeID(char *message)
+int changeID(char *message, char *oldID)
 {
     unsigned short id;
     memcpy(&id, message, sizeof(id));
@@ -13,17 +15,28 @@ int changeID(char *message)
         tmp = rand() % 1000 + 1;
     } while (userRord[tmp].originalID);
     userRord[tmp].originalID = ntohs(id);
+    memcpy(oldID, &id, 2);
     userRord[tmp].userAddr = tempAddr;
     return tmp;
 }
 void sendToServer(char *message, int length)
 {
-    unsigned short newID = htons(changeID(message));
+    unsigned char oldID[2];
+    unsigned short newID = htons(changeID(message, oldID));
     memcpy(message, &newID, sizeof(newID));
     int sendLength = sendto(sock, message, length, 0, (SOCKADDR *)&serverAddr, sizeof(serverAddr));
-    if (sendLength < 0) {}
+    if (sendLength < 0)
+        printf("#Error %d\n", WSAGetLastError());
     else
     {
+        printf("SEND to %s:%d(%dbytes)  ", inet_ntoa(serverAddr.sin_addr), ntohs(serverAddr.sin_port), sendLength);
+        printf("[ID ");
+        printf("%x%x", (oldID[0] & 0xf0) >> 4, oldID[0] & 0x0f);
+        printf("%x%x", (oldID[1] & 0xf0) >> 4, oldID[1] & 0x0f);
+        printf("->");
+        printf("%x%x", (message[0] & 0xf0) >> 4, message[0] & 0x0f);
+        printf("%x%x]", (message[1] & 0xf0) >> 4, message[1] & 0x0f);
+        printf("\n");
     }
 }
 void processMessage(char *message)
@@ -80,8 +93,8 @@ void ipv4Message(char *message, int pos, int anCount, int off)
             memcpy(&addrtmp.sin_addr.s_addr, iptmp, sizeof(iptmp));
             memcpy(ip, inet_ntoa(addrtmp.sin_addr), sizeof(ip));
 
-            DNSrecord[pos].ip[i] = (char *)malloc((sizeof(char)) * (strlen(ip) + 1));
-            memcpy(DNSrecord[pos].ip[i], ip, sizeof(ip));
+            DNSrecord[pos].ip[count] = (char *)malloc((sizeof(char)) * (strlen(ip) + 1));
+            memcpy(DNSrecord[pos].ip[count], ip, sizeof(ip));
             count++;
         }
     }
@@ -100,25 +113,37 @@ void ipv4Message(char *message, int pos, int anCount, int off)
     }
     else
         clearRecord(pos);
-    qsort(DNSrecord, recordNum, sizeof(RECORD), cmp);
+    // qsort(DNSrecord, recordNum, sizeof(RECORD), cmp);
 }
 void recvMessage(char *message, int length)
 {
     unsigned short newID;
+    unsigned char new[2];
     memcpy(&newID, message, sizeof(newID));
+    memcpy(&new, message, sizeof(new));
     unsigned short oldID = htons(userRord[ntohs(newID)].originalID);
     memcpy(message, &oldID, sizeof(oldID));
     tempAddr = userRord[ntohs(newID)].userAddr;
 
     int sendLength = sendto(sock, message, length, 0, (SOCKADDR *)&(tempAddr), sizeof(tempAddr));
-    if (sendLength < 0) {}
-    else
+    if (sendLength < 0)
+        printf("#Error %d\n", WSAGetLastError());
+    else if (debugLevel > 1)
     {
+        newID = ntohs(newID);
+        printf("SEND to %s:%d(%dbytes)  ", inet_ntoa(tempAddr.sin_addr), ntohs(tempAddr.sin_port), sendLength);
+        printf("[ID ");
+        printf("%x%x", (newID & 0xf000) >> 12, (newID & 0x0f00) >> 8);
+        printf("%x%x", (newID & 0x00f0) >> 4, newID & 0x000f);
+        printf("->");
+        printf("%x%x", (message[0] & 0xf0) >> 4, message[0] & 0x0f);
+        printf("%x%x]", (message[1] & 0xf0) >> 4, message[1] & 0x0f);
+        printf("\n");
     }
 }
 void clearRecord(int pos)
 {
-    if (DNSrecord[pos].domain)
+    if (DNSrecord[pos].domain != NULL)
     {
         free(DNSrecord[pos].domain);
         DNSrecord[pos].domain = NULL;
