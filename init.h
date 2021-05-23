@@ -48,6 +48,7 @@ SOCKADDR_IN clientAddr, serverAddr, tempAddr;
 RECORD DNSrecord[1000];
 USER userRord[65536];
 
+HANDLE hMutex1, hMutex2, hMutex3, hMutex4, hMutex5;
 char messageStructure[8];
 
 int initSock(char *);

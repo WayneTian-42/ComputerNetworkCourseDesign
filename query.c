@@ -27,8 +27,9 @@ void sendToServer(char *message, int length)
     int sendLength = sendto(sock, message, length, 0, (SOCKADDR *)&serverAddr, sizeof(serverAddr));
     if (sendLength < 0)
         printf("#Error %d\n", WSAGetLastError());
-    else
+    else if (debugLevel > 1)
     {
+        WaitForSingleObject(hMutex4, INFINITE);
         printf("SEND to %s:%d(%dbytes)  ", inet_ntoa(serverAddr.sin_addr), ntohs(serverAddr.sin_port), sendLength);
         printf("[ID ");
         printf("%x%x", (oldID[0] & 0xf0) >> 4, oldID[0] & 0x0f);
@@ -37,6 +38,7 @@ void sendToServer(char *message, int length)
         printf("%x%x", (message[0] & 0xf0) >> 4, message[0] & 0x0f);
         printf("%x%x]", (message[1] & 0xf0) >> 4, message[1] & 0x0f);
         printf("\n");
+        ReleaseMutex(hMutex4);
     }
 }
 void processMessage(char *message)
@@ -131,6 +133,7 @@ void recvMessage(char *message, int length)
     else if (debugLevel > 1)
     {
         newID = ntohs(newID);
+        WaitForSingleObject(hMutex5, INFINITE);
         printf("SEND to %s:%d(%dbytes)  ", inet_ntoa(tempAddr.sin_addr), ntohs(tempAddr.sin_port), sendLength);
         printf("[ID ");
         printf("%x%x", (newID & 0xf000) >> 12, (newID & 0x0f00) >> 8);
@@ -139,6 +142,7 @@ void recvMessage(char *message, int length)
         printf("%x%x", (message[0] & 0xf0) >> 4, message[0] & 0x0f);
         printf("%x%x]", (message[1] & 0xf0) >> 4, message[1] & 0x0f);
         printf("\n");
+        ReleaseMutex(hMutex5);
     }
 }
 void clearRecord(int pos)

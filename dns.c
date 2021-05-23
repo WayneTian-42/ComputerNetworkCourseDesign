@@ -4,12 +4,11 @@
 #include <process.h>
 #include <sys/timeb.h>
 #include "dns.h"
+#include "init.h"
 
 char DNSServer[] = "202.106.0.20";
 char localFile[] = "D:\\VS-Code\\Vs-Code-C\\Semester_4\\computerNetwork\\DNS\\dnsrelay.txt";
 int num = 1;
-
-HANDLE hMutex;
 
 int main(int argc, char **argv)
 {
@@ -29,6 +28,10 @@ int main(int argc, char **argv)
 
     ftime(&start);
 
+    _beginthread(dnsRelay, 0, NULL);
+    _beginthread(dnsRelay, 0, NULL);
+    _beginthread(dnsRelay, 0, NULL);
+    _beginthread(dnsRelay, 0, NULL);
     _beginthread(dnsRelay, 0, NULL);
     _beginthread(dnsRelay, 0, NULL);
     _beginthread(dnsRelay, 0, NULL);
@@ -93,6 +96,7 @@ void dnsRelay()
         getHeader(&header, message);
         if (debugLevel > 1)
         {
+            WaitForSingleObject(hMutex1, INFINITE);
             printf("RECV from %s:%d(%dbytes)  ", inet_ntoa(tempAddr.sin_addr), ntohs(tempAddr.sin_port), messageLength);
             for (int i = 0; i < messageLength; i++)
                 outputByBit(message[i]);
@@ -112,6 +116,7 @@ void dnsRelay()
             printf("ANCOUNT: %d, ", header.ANCOUNT);
             printf("NSCOUNT:%d, ", header.NSCOUNT);
             printf("ARCOUNT:%d\n", header.ARCOUNT);
+            ReleaseMutex(hMutex1);
         }
 
         char domain[128];
@@ -124,19 +129,19 @@ void dnsRelay()
         {
             //判断本地是否缓存该域名
             int pos = searchLocal(domain, recordNum);
-            if (debugLevel > -1)
+            if (debugLevel > 0)
             {
-                // WaitForSingleObject(hMutex, INFINITE);
+                WaitForSingleObject(hMutex2, INFINITE);
                 outTime();
                 printf("%4d:", num++);
                 if (pos == -1)
                     printf("  ");
                 else
                     printf("* ");
-                for (int i = 0; domain[i] != 0; i++)
-                    printf("%c", domain[i]);
-                printf("\n");
-                // ReleaseMutex(hMutex);
+                /* for (int i = 0; domain[i] != 0; i++)
+                    printf("%c", domain[i]); */
+                puts(domain);
+                ReleaseMutex(hMutex2);
             }
             if ((pos != -1) && (message[messageLength - 3] == 1))
                 sendBack(message, pos, messageLength);
