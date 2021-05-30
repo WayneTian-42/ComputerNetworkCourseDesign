@@ -29,10 +29,10 @@ int main(int argc, char **argv)
 
     ftime(&start);
 
+    /* _beginthread(dnsRelay, 0, NULL);
     _beginthread(dnsRelay, 0, NULL);
     _beginthread(dnsRelay, 0, NULL);
-    _beginthread(dnsRelay, 0, NULL);
-    _beginthread(dnsRelay, 0, NULL);
+    _beginthread(dnsRelay, 0, NULL); */
     dnsRelay();
 
     return 0;
@@ -70,7 +70,7 @@ bool isIPAddress(char *str)
 }
 void dnsRelay()
 {
-    unsigned char message[MESSAGESIZE];
+    /* unsigned  */ char message[MESSAGESIZE];
     memset(message, 0, sizeof(message));
     char ip[32];
     memset(ip, 0, sizeof(ip));
@@ -124,7 +124,10 @@ void dnsRelay()
         {
             //判断本地是否缓存该域名
             int pos = searchLocal(domain, recordNum);
-            if (debugLevel > -1)
+            unsigned short type, class;
+            memcpy(&type, &message[messageLength - 3], sizeof(type));
+            memcpy(&class, &message[messageLength - 3], sizeof(class));
+            if (debugLevel)
             {
                 // WaitForSingleObject(hMutex, INFINITE);
                 outTime();
@@ -135,17 +138,19 @@ void dnsRelay()
                     printf("* ");
                 for (int i = 0; domain[i] != 0; i++)
                     printf("%c", domain[i]);
+                printf("  TYPE: %d", type);
+                printf("  CLASS: %d", class);
                 printf("\n");
                 // ReleaseMutex(hMutex);
             }
-            if ((pos != -1) && (message[messageLength - 3] == 1))
+            if ((pos != -1) && (type == 1))  // 查找到域名且是IPv4请求
                 sendBack(message, pos, messageLength);
             else
                 sendToServer(message, messageLength);
         }
         else  //响应报文
         {
-            processMessage(message);
+            processMessage(message, &header);
             recvMessage(message, messageLength);
         }
     }

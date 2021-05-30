@@ -4,7 +4,7 @@
 #include "request.h"
 #include "query.h"
 
-int changeID(char *message, char *oldID)
+int changeID(char *message, unsigned char *oldID)
 {
     unsigned short id;
     memcpy(&id, message, sizeof(id));
@@ -27,7 +27,7 @@ void sendToServer(char *message, int length)
     int sendLength = sendto(sock, message, length, 0, (SOCKADDR *)&serverAddr, sizeof(serverAddr));
     if (sendLength < 0)
         printf("#Error %d\n", WSAGetLastError());
-    else
+    else if (debugLevel == 2)
     {
         printf("SEND to %s:%d(%dbytes)  ", inet_ntoa(serverAddr.sin_addr), ntohs(serverAddr.sin_port), sendLength);
         printf("[ID ");
@@ -39,14 +39,10 @@ void sendToServer(char *message, int length)
         printf("\n");
     }
 }
-void processMessage(char *message)
+void processMessage(char *message, HEADER *header)
 {
-    char rcode, type;
-    short anCount, finalType;
-    memcpy(&rcode, message + 3, sizeof(rcode));
-    rcode = ntohs(rcode);
-    memcpy(&anCount, message + 6, sizeof(anCount));
-    anCount = ntohs(anCount);
+    char type;
+    short finalType;
     memcpy(&type, message + HEADERSIZE, sizeof(type));
     int off = type + HEADERSIZE + 1;
     while (type != 0)
@@ -57,7 +53,7 @@ void processMessage(char *message)
     memcpy(&finalType, message + off + 1, sizeof(finalType));
     // rocde不为0表示出错，但是rcode只占4字节
     // ANCOUNT表示回答数，finalType表示类型，为1时表示TypeA即IPV4
-    if (!(rcode & 0x0F) || !anCount)
+    if (!header->RCODE || !header->ANCOUNT)
         return;
     if (finalType == 1)
     {
@@ -67,7 +63,7 @@ void processMessage(char *message)
                 break;
         if (pos >= 1000)
             return;
-        ipv4Message(message, pos, anCount, off + 4);  //加4是type和class字段，之后就是name（指针）
+        ipv4Message(message, pos, header->ANCOUNT, off + 4);  //加4是type和class字段，之后就是name（指针）
     }
     else
         return;

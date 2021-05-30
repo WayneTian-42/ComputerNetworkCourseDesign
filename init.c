@@ -71,7 +71,7 @@ int readFile(char *localFile)
             DNSrecord[num].ip[0] = (char *)malloc(size + 1);
             DNSrecord[num].sum = 1;
             DNSrecord[num].recordTime = time(NULL);
-            DNSrecord[num].ttl = 10;  //默认为一小时
+            DNSrecord[num].ttl = 120;  //默认为一小时
             strcpy(DNSrecord[num].ip[0], buffer);
             flg = 1;
             if (debugLevel == 2)

@@ -52,7 +52,15 @@ int searchLocal(char *domain, int num)
         if (!DNSrecord[i].domain)
             continue;
         else if (!strcmp(domain, DNSrecord[i].domain))
-            return i;
+        {
+            if (DNSrecord[i].ttl < difftime(time(NULL), DNSrecord[i].recordTime))
+                return i;
+            else
+            {
+                clearRecord(i);
+                return -1;
+            }
+        }
     }
     return -1;
 }
@@ -110,7 +118,7 @@ void sendBack(char *message, int pos, int length)
     int sendLength = sendto(sock, sendMessage, length + i * 16, 0, (SOCKADDR *)&tempAddr, sizeof(tempAddr));
     if (sendLength < 0)
         printf("#Error %d\n", WSAGetLastError());
-    else if (debugLevel > 1)
+    else if (debugLevel == 2)
     {
         printf("SEND to %s:%d(%dbytes)  ", inet_ntoa(tempAddr.sin_addr), ntohs(tempAddr.sin_port), sendLength);
         for (int i = 0; i < sendLength; i++)
