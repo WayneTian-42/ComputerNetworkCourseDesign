@@ -131,6 +131,29 @@ void getHeader(HEADER *header, char *message)
     memcpy(&tmp, message + 10, sizeof(tmp));
     header->ARCOUNT = ntohs(tmp);
 }
+void getDomain(char *message, char *domain)
+{
+    // nextLength表示下一段域名长度
+    int nextLength = message[0];
+    // totalLength表示到现在为止总长度
+    int totalLength = 0;
+
+    while (1)
+    {
+        int i = 1;
+        for (; i <= nextLength; i++)
+            domain[i + totalLength - 1] = message[i + totalLength];
+        // tmp记录next，因为马上next要更新
+        int tmp = nextLength;
+        nextLength = message[totalLength + nextLength + 1];
+        //域名以00结尾，非0就可以在输出时用.来代替
+        if (nextLength)
+            domain[i + totalLength - 1] = '.';
+        else
+            break;
+        totalLength += tmp + 1;
+    }
+}
 //先这么改，不行就修改二分算法
 /* int cmp(const void *a, const void *b)
 {

@@ -1,38 +1,7 @@
 #include <stdio.h>
 #include <string.h>
-#include "init.h"
 #include "request.h"
-#include "query.h"
 
-int request(char *message)
-{
-    unsigned short flg;
-    memcpy(&flg, message + 2, sizeof(flg));
-    return !((ntohs(flg)) & 0x8000);
-}
-void getDomain(char *message, char *domain)
-{
-    // nextLength表示下一段域名长度
-    int nextLength = message[0];
-    // totalLength表示到现在为止总长度
-    int totalLength = 0;
-
-    while (1)
-    {
-        int i = 1;
-        for (; i <= nextLength; i++)
-            domain[i + totalLength - 1] = message[i + totalLength];
-        // tmp记录next，因为马上next要更新
-        int tmp = nextLength;
-        nextLength = message[totalLength + nextLength + 1];
-        //域名以00结尾，非0就可以在输出时用.来代替
-        if (nextLength)
-            domain[i + totalLength - 1] = '.';
-        else
-            break;
-        totalLength += tmp + 1;
-    }
-}
 int searchLocal(char *domain, int num)
 {
     int left = 0, right = num - 1;

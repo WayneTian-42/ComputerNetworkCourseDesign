@@ -8,7 +8,7 @@
 #define MESSAGESIZE 1024
 #define HEADERSIZE 12
 
-//查询记录
+// 查询记录
 typedef struct
 {
     char *domain;
@@ -17,13 +17,14 @@ typedef struct
     time_t recordTime, ttl;
 } RECORD;
 
-//哈希表记录用户地址与IP
+// 哈希表记录用户地址与IP
 typedef struct
 {
     SOCKADDR_IN userAddr;
     unsigned short originalID;
 } USER;
 
+// 报文头部
 typedef struct
 {
     unsigned ID : 16;
@@ -42,16 +43,46 @@ typedef struct
 
 } HEADER;
 
+// 记录数量 和 调试等级
 extern int recordNum, debugLevel;
-SOCKET sock;
-SOCKADDR_IN clientAddr, serverAddr, tempAddr;
-RECORD DNSrecord[1000];
-USER userRord[65536];
+SOCKET sock;                                   // socket
+SOCKADDR_IN clientAddr, serverAddr, tempAddr;  // 本地地址，服务器地址，临时地址
+RECORD DNSrecord[1000];                        // DNS记录
+USER userRord[65536];                          // 用户ID转换记录
 
-char messageStructure[8];
-
-int initSock(char *);
-int readFile(char *);
-void outputByBit(char);
-void getHeader(HEADER *, char *);
-int cmp(const void *, const void *);
+// char messageStructure[8];
+/**
+ * @brief 初始化socket
+ *
+ * @param DNSServer 服务器地址
+ * @return int -1表示建立失败，1表示建立成功
+ */
+int initSock(char *DNSServer);
+/**
+ * @brief 读取文件内容
+ *
+ * @param localFile 文件地址
+ * @return int 返回文件内记录个数
+ */
+int readFile(char *localFile);
+/**
+ * @brief 一字节内容按两个十六进制输出
+ *
+ * @param c 一字节内容
+ */
+void outputByBit(char c);
+/**
+ * @brief Get the Header object
+ *
+ * @param header 头部结构体
+ * @param message 报文信息
+ */
+void getHeader(HEADER *header, char *message);
+/**
+ * @brief Get the Domain object
+ *
+ * @param message 报文信息
+ * @param domain 存储域名
+ */
+void getDomain(char *message, char *domain);
+// int cmp(const void *, const void *);

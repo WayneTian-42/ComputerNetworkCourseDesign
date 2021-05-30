@@ -2,11 +2,10 @@
 // #include <minwindef.h>
 #include <string.h>
 #include <process.h>
-#include <sys/timeb.h>
 #include "dns.h"
 
-char DNSServer[] = "202.106.0.20";
-char localFile[] = "D:\\VS-Code\\Vs-Code-C\\Semester_4\\computerNetwork\\DNS\\dnsrelay.txt";
+char DNSServer[16] = "202.106.0.20";
+char localFile[100] = "D:\\VS-Code\\Vs-Code-C\\Semester_4\\computerNetwork\\DNS\\dnsrelay.txt";
 int num = 1;
 
 HANDLE hMutex;
@@ -27,7 +26,7 @@ int main(int argc, char **argv)
         return -1;
     recordNum = readFile(localFile);
 
-    ftime(&start);
+    ftime(&start);  // 开始计时
 
     /* _beginthread(dnsRelay, 0, NULL);
     _beginthread(dnsRelay, 0, NULL);
@@ -49,20 +48,39 @@ bool debug(int argc, char **argv)
             debugLevel = 1;
         else if (!strcmp(argv[i], "-dd"))
             debugLevel = 2;
-        else if (argv[i][0] >= '0' || argv[i][0] <= '9')
+        else if (judgeForm(argv[i]))
         {
             if (isIPAddress(argv[i]))
-                memcpy(DNSServer, argv[i], sizeof(*argv[i]));
+            {
+                // puts(argv[i]);
+                memset(DNSServer, 0, sizeof(DNSServer));
+                memcpy(DNSServer, argv[i], strlen(argv[i]));
+                // puts(DNSServer);
+            }
             else
             {
                 flg = FALSE;
+                // puts(argv[i]);
+                // printf("%ld", inet_addr(argv[i]));
                 printf("Illegal IPV4 address!\n");
             }
         }
         else if (flg)
-            memcpy(DNSServer, argv[i], sizeof(*argv[i]));
+        {
+            memset(localFile, 0, sizeof(localFile));
+            memcpy(localFile, argv[i], strlen(argv[i]));
+            // puts(localFile);
+        }
     }
     return flg;
+}
+bool judgeForm(char *str)
+{
+    bool flg = TRUE;
+    for (int i = 0; i < strlen(str); i++)
+        if ((str[i] < '0' || str[i] > '9') && str[i] != '.')
+            return FALSE;
+    return TRUE;
 }
 bool isIPAddress(char *str)
 {
@@ -82,13 +100,15 @@ void dnsRelay()
         DWORD dwBytesReturned = 0;
         WSAIoctl(sock, SIO_UDP_CONNRESET, &bNewBehavior, sizeof bNewBehavior, NULL, 0, &dwBytesReturned, NULL, NULL); */
         int tempLength = sizeof(tempAddr);
-        // temp用来记录当前信息的来源地址
+        // tempAddr用来记录当前信息的来源地址
+        // 接收报文
         int messageLength = recvfrom(sock, message, sizeof(message), 0, (SOCKADDR *)&tempAddr, &tempLength);
-        if (messageLength < 0)
+        if (messageLength < 0)  // 发生错误
         {
             printf("#Error %d\n", WSAGetLastError());
             continue;
         }
+        // 分析报文头
         memset(&header, 0, sizeof(header));
         getHeader(&header, message);
         if (debugLevel > 1)
@@ -114,9 +134,9 @@ void dnsRelay()
             printf("ARCOUNT:%d\n", header.ARCOUNT);
         }
 
+        //获取想要查询的域名
         char domain[128];
         memset(domain, 0, sizeof(domain));
-        //获取想要查询的域名
         getDomain(message + HEADERSIZE, domain);
 
         //判断是查询报文还是响应报文

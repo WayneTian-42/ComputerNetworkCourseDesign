@@ -1,8 +1,7 @@
 #include <stdio.h>
 #include <string.h>
-#include "init.h"
-#include "request.h"
 #include "query.h"
+#include "request.h"
 
 int changeID(char *message, unsigned char *oldID)
 {
@@ -68,7 +67,7 @@ void processMessage(char *message, HEADER *header)
     else
         return;
 }
-//这里会出现莫名其妙的bug
+//这里会出现莫名其妙的bug，现在应该没了
 void ipv4Message(char *message, int pos, int anCount, int off)
 {
     short type;
