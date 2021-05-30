@@ -152,10 +152,10 @@ void dnsRelay()
                 // WaitForSingleObject(hMutex, INFINITE);
                 outTime();
                 printf("%4d:", num++);
-                if (pos == -1)
-                    printf("  ");
-                else
+                if (pos != -1 && type == 1)
                     printf("* ");
+                else
+                    printf("  ");
                 for (int i = 0; domain[i] != 0; i++)
                     printf("%c", domain[i]);
                 printf("  TYPE: %d", type);

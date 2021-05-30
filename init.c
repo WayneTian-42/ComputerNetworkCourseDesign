@@ -68,7 +68,7 @@ int readFile(char *localFile)
             continue; */
         if (!flg)  //记录ip地址
         {
-            DNSrecord[num].ip[0] = (char *)malloc(size + 1);
+            DNSrecord[num].ip[0] = (char *)malloc(sizeof(char) * (size + 1));
             DNSrecord[num].sum = 1;
             DNSrecord[num].recordTime = time(NULL);
             DNSrecord[num].ttl = 120;  //默认为一小时
@@ -82,7 +82,7 @@ int readFile(char *localFile)
         }
         else  //记录域名
         {
-            DNSrecord[num].domain = (char *)malloc(size + 1);
+            DNSrecord[num].domain = (char *)malloc(sizeof(char) * (size + 1));
             strcpy(DNSrecord[num].domain, buffer);
             flg = 0;
             if (debugLevel == 2)

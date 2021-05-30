@@ -1,12 +1,13 @@
 #include <stdio.h>
 #include <string.h>
+#include <time.h>
 #include "request.h"
 
 int searchLocal(char *domain, int num)
 {
-    int left = 0, right = num - 1;
     //二分查找
-    /* while (left <= right)
+    /* int left = 0, right = num - 1;
+    while (left <= right)
     {
         int mid = left + (right - left) / 2;
         if (strcmp(domain, DNSrecord[mid].domain) > 0)
@@ -16,16 +17,17 @@ int searchLocal(char *domain, int num)
         else
             return mid;
     } */
-    for (int i = left; i < right; i++)
+    for (int i = 0; i < num; i++)
     {
         if (!DNSrecord[i].domain)
             continue;
         else if (!strcmp(domain, DNSrecord[i].domain))
         {
-            if (DNSrecord[i].ttl < difftime(time(NULL), DNSrecord[i].recordTime))
+            if (DNSrecord[i].ttl > difftime(time(NULL), DNSrecord[i].recordTime))
                 return i;
             else
             {
+                time_t now = time(NULL);
                 clearRecord(i);
                 return -1;
             }
@@ -39,6 +41,7 @@ void sendBack(char *message, int pos, int length)
     if (DNSrecord[pos].ttl < difftime(time(NULL), DNSrecord[pos].recordTime))
     {
         sendToServer(message, length);
+        clearRecord(pos);
         return;
     }
 
