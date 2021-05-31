@@ -25,7 +25,7 @@ void sendToServer(char *message, int length)
     memcpy(message, &newID, sizeof(newID));
     int sendLength = sendto(sock, message, length, 0, (SOCKADDR *)&serverAddr, sizeof(serverAddr));
     if (sendLength < 0)
-        printf("#Error %d\n", WSAGetLastError());
+        printf("#Send Error %d\n", WSAGetLastError());
     else if (debugLevel == 2)
     {
         printf("SEND to %s:%d(%dbytes)  ", inet_ntoa(serverAddr.sin_addr), ntohs(serverAddr.sin_port), sendLength);
@@ -40,8 +40,8 @@ void sendToServer(char *message, int length)
 }
 void processMessage(char *message, HEADER *header)
 {
-    char start;       // 记录报文域名对应ip地址的偏移量
-    short finalType;  // ip类型
+    char start;                // 记录报文域名对应ip地址的偏移量
+    unsigned short finalType;  // ip类型
     memcpy(&start, message + HEADERSIZE, sizeof(start));
     int off = start + HEADERSIZE + 1;
     while (start != 0)
@@ -50,6 +50,7 @@ void processMessage(char *message, HEADER *header)
         off += start + 1;
     }
     memcpy(&finalType, message + off + 1, sizeof(finalType));
+    // finalType = ntohs(finalType);  // 为什么不需要转换字节序？
     // rocde不为0表示出错，但是rcode只占4字节
     // ANCOUNT表示回答数，finalType表示类型，为1时表示TypeA即IPV4
     if (header->RCODE || !header->ANCOUNT)
@@ -79,14 +80,18 @@ void processMessage(char *message, HEADER *header)
 //这里会出现莫名其妙的bug，现在应该没了
 void ipv4Message(char *message, int pos, int anCount, int off)
 {
-    short type;
+    unsigned short type, class, dataLen;
     char iptmp[4] = {0}, ip[16] = {0};
     int count = 0;
-    for (int i = 0; i < anCount && count < 20; i++, off += 16)
+    for (int i = 0; i < anCount && count < 20; i++, off += 12 + dataLen)
     {
         memcpy(&type, message + off + 2, sizeof(type));
+        memcpy(&class, message + off + 4, sizeof(class));
+        memcpy(&dataLen, message + off + 10, sizeof(dataLen));
         type = ntohs(type);
-        if (type == 1)
+        class = ntohs(class);
+        dataLen = ntohs(dataLen);
+        if (type == 1 && class == 1)
         {
             unsigned int ttl;
             memcpy(&ttl, message + off + 6, sizeof(ttl));
@@ -98,10 +103,11 @@ void ipv4Message(char *message, int pos, int anCount, int off)
             memcpy(&addrtmp.sin_addr.s_addr, iptmp, sizeof(iptmp));
             memcpy(ip, inet_ntoa(addrtmp.sin_addr), sizeof(ip));
 
-            DNSrecord[pos].ip[count] = (char *)malloc(sizeof(char) * (strlen(ip) + 1));
-            memcpy(DNSrecord[pos].ip[count], ip, sizeof(ip));
+            // DNSrecord[pos].ip[count] = (char *)malloc(sizeof(char) * (sizeof(ip) + 1));
+            memcpy(DNSrecord[pos].ip[count], ip, strlen(ip));
             count++;
         }
+        if (debugLevel == 2) {}
     }
     if (count)
     {
@@ -109,8 +115,8 @@ void ipv4Message(char *message, int pos, int anCount, int off)
         memset(domain, 0, sizeof(domain));
         getDomain(message + HEADERSIZE, domain);
         DNSrecord[pos].recordTime = time(NULL);
-        DNSrecord[pos].domain = (char *)malloc(sizeof(char) * (strlen(domain) + 1));
-        memcpy(DNSrecord[pos].domain, domain, sizeof(domain));
+        // DNSrecord[pos].domain = (char *)malloc(sizeof(char) * (strlen(domain) + 1));
+        memcpy(DNSrecord[pos].domain, domain, strlen(domain));
         if (pos >= recordNum)
             recordNum++;
         DNSrecord[pos].sum = count;
@@ -119,7 +125,7 @@ void ipv4Message(char *message, int pos, int anCount, int off)
         clearRecord(pos);
     // qsort(DNSrecord, recordNum, sizeof(RECORD), cmp);
 }
-void recvMessage(char *message, int length)
+void snedAnswer(char *message, int length)
 {
     unsigned short newID;
     unsigned char new[2];
@@ -127,15 +133,15 @@ void recvMessage(char *message, int length)
     memcpy(&new, message, sizeof(new));
     unsigned short oldID = htons(userRord[ntohs(newID)].originalID);
     memcpy(message, &oldID, sizeof(oldID));
-    tempAddr = userRord[ntohs(newID)].userAddr;
+    SOCKADDR_IN sourceAddr = userRord[ntohs(newID)].userAddr;
 
-    int sendLength = sendto(sock, message, length, 0, (SOCKADDR *)&(tempAddr), sizeof(tempAddr));
+    int sendLength = sendto(sock, message, length, 0, (SOCKADDR *)&(sourceAddr), sizeof(sourceAddr));
     if (sendLength < 0)
-        printf("#Error %d\n", WSAGetLastError());
+        printf("#Send Error %d\n", WSAGetLastError());
     else if (debugLevel > 1)
     {
         newID = ntohs(newID);
-        printf("SEND to %s:%d(%dbytes)  ", inet_ntoa(tempAddr.sin_addr), ntohs(tempAddr.sin_port), sendLength);
+        printf("SEND to %s:%d(%dbytes)  ", inet_ntoa(sourceAddr.sin_addr), ntohs(sourceAddr.sin_port), sendLength);
         printf("[ID ");
         printf("%x%x", (newID & 0xf000) >> 12, (newID & 0x0f00) >> 8);
         printf("%x%x", (newID & 0x00f0) >> 4, newID & 0x000f);
@@ -147,20 +153,22 @@ void recvMessage(char *message, int length)
 }
 void clearRecord(int pos)
 {
-    if (DNSrecord[pos].domain != NULL)
+    /* if (DNSrecord[pos].domain != NULL)
     {
         free(DNSrecord[pos].domain);
         DNSrecord[pos].domain = NULL;
-    }
+    } */
+    memset(DNSrecord[pos].domain, 0, sizeof(DNSrecord[pos].domain));
     DNSrecord[pos].recordTime = 0;
     DNSrecord[pos].ttl = 0;
     for (int i = 0; i < DNSrecord[pos].sum; i++)
     {
-        if (DNSrecord[pos].ip[i] != NULL)
+        /* if (DNSrecord[pos].ip[i] != NULL)
         {
             free(DNSrecord[pos].ip[i]);
             DNSrecord[pos].ip[i] = NULL;
-        }
+        } */
+        memset(DNSrecord[pos].ip[i], 0, sizeof(DNSrecord[pos].ip[i]));
     }
     DNSrecord[pos].sum = 0;
 }

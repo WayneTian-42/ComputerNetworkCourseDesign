@@ -89,13 +89,16 @@ void sendBack(char *message, int pos, int length)
 
     int sendLength = sendto(sock, sendMessage, length + i * 16, 0, (SOCKADDR *)&tempAddr, sizeof(tempAddr));
     if (sendLength < 0)
-        printf("#Error %d\n", WSAGetLastError());
+        printf("#Send Error %d\n", WSAGetLastError());
     else if (debugLevel == 2)
     {
-        printf("SEND to %s:%d(%dbytes)  ", inet_ntoa(tempAddr.sin_addr), ntohs(tempAddr.sin_port), sendLength);
+        printf("SEND to %s:%d(%dbytes)  \n\t", inet_ntoa(tempAddr.sin_addr), ntohs(tempAddr.sin_port), sendLength);
         for (int i = 0; i < sendLength; i++)
+        {
             outputByBit(sendMessage[i]);
-
+            if (!((i + 1) % 32))
+                printf("\n\t");
+        }
         /* printf("%x ", sendMessage[i]);*/
         printf("\n\t");
         printf("ID:");

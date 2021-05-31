@@ -105,7 +105,7 @@ void dnsRelay()
         int messageLength = recvfrom(sock, message, sizeof(message), 0, (SOCKADDR *)&tempAddr, &tempLength);
         if (messageLength < 0)  // 发生错误
         {
-            printf("#Error %d\n", WSAGetLastError());
+            printf("#Recv Error %d\n", WSAGetLastError());
             continue;
         }
         // 分析报文头
@@ -113,9 +113,13 @@ void dnsRelay()
         getHeader(&header, message);
         if (debugLevel > 1)
         {
-            printf("RECV from %s:%d(%dbytes)  ", inet_ntoa(tempAddr.sin_addr), ntohs(tempAddr.sin_port), messageLength);
+            printf("RECV from %s:%d(%dbytes)  \n\t", inet_ntoa(tempAddr.sin_addr), ntohs(tempAddr.sin_port), messageLength);
             for (int i = 0; i < messageLength; i++)
+            {
                 outputByBit(message[i]);
+                if (!((i + 1) % 32))
+                    printf("\n\t");
+            }
             printf("\n\t");
             printf("ID:");
             printf("%x%x", (message[0] & 0xf0) >> 4, message[0] & 0x0f);
@@ -145,8 +149,10 @@ void dnsRelay()
             //判断本地是否缓存该域名
             int pos = searchLocal(domain, recordNum);
             unsigned short type, class;
-            memcpy(&type, &message[messageLength - 3], sizeof(type));
-            memcpy(&class, &message[messageLength - 3], sizeof(class));
+            memcpy(&type, &message[messageLength - 4], sizeof(type));
+            memcpy(&class, &message[messageLength - 2], sizeof(class));
+            type = ntohs(type);
+            class = ntohs(class);
             if (debugLevel)
             {
                 // WaitForSingleObject(hMutex, INFINITE);
@@ -163,7 +169,7 @@ void dnsRelay()
                 printf("\n");
                 // ReleaseMutex(hMutex);
             }
-            if ((pos != -1) && (type == 1))  // 查找到域名且是IPv4请求
+            if ((pos != -1) && (type == 1 && class == 1))  // 查找到域名且是IPv4请求
                 sendBack(message, pos, messageLength);
             else
                 sendToServer(message, messageLength);
@@ -171,7 +177,7 @@ void dnsRelay()
         else  //响应报文
         {
             processMessage(message, &header);
-            recvMessage(message, messageLength);
+            snedAnswer(message, messageLength);
         }
     }
 }

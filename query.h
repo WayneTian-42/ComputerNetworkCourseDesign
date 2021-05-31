@@ -38,7 +38,7 @@ void ipv4Message(char *message, int pos, int anCount, int off);
  * @param message 报文
  * @param length 报文长度
  */
-void recvMessage(char *message, int length);
+void snedAnswer(char *message, int length);
 /**
  * @brief 清理ttl已超时的记录
  *

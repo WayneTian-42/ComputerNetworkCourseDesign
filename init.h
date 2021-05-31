@@ -11,8 +11,8 @@
 // 查询记录
 typedef struct
 {
-    char *domain;
-    char *ip[20];
+    char domain[100];
+    char ip[20][18];
     int sum, type;
     time_t recordTime, ttl;
 } RECORD;
