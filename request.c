@@ -6,7 +6,7 @@
 int searchLocal(char *domain, int num)
 {
     //二分查找
-    /* int left = 0, right = num - 1;
+    int left = 0, right = num - 1;
     while (left <= right)
     {
         int mid = left + (right - left) / 2;
@@ -15,11 +15,20 @@ int searchLocal(char *domain, int num)
         else if (strcmp(domain, DNSrecord[mid].domain) < 0)
             right = mid - 1;
         else
-            return mid;
-    } */
-    for (int i = 0; i < num; i++)
+        {
+            if (DNSrecord[mid].ttl > difftime(time(NULL), DNSrecord[mid].recordTime))
+                return mid;
+            else
+            {
+                time_t now = time(NULL);
+                clearRecord(mid);
+                return -1;
+            }
+        }
+    }
+    /* for (int i = 0; i < num; i++)
     {
-        if (!DNSrecord[i].domain)
+        if (!strlen(DNSrecord[i].domain))
             continue;
         else if (!strcmp(domain, DNSrecord[i].domain))
         {
@@ -33,7 +42,7 @@ int searchLocal(char *domain, int num)
             }
         }
     }
-    return -1;
+    return -1; */
 }
 void sendBack(char *message, int pos, int length)
 {

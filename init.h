@@ -85,4 +85,4 @@ void getHeader(HEADER *header, char *message);
  * @param domain 存储域名
  */
 void getDomain(char *message, char *domain);
-// int cmp(const void *, const void *);
+int cmp(const void *, const void *);

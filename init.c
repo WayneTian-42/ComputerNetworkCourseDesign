@@ -92,8 +92,8 @@ int readFile(char *localFile)
     }
     fclose(fp);
     printf("%d domains, occupy %d bytes memory\n", num, memory);
-    /*     //快排，变为有序序列，便于查找
-        qsort(DNSrecord, num, sizeof(RECORD), cmp); */
+    //快排，变为有序序列，便于查找
+    qsort(DNSrecord, num, sizeof(RECORD), cmp);
     return num;
 }
 void outputByBit(char c)
@@ -155,12 +155,12 @@ void getDomain(char *message, char *domain)
     }
 }
 //先这么改，不行就修改二分算法
-/* int cmp(const void *a, const void *b)
+int cmp(const void *a, const void *b)
 {
-    if (((RECORD *)a)->domain != NULL && ((RECORD *)b)->domain != NULL)
+    if (!strlen(((RECORD *)a)->domain) && !strlen(((RECORD *)b)->domain))
         return strcmp(((RECORD *)a)->domain, ((RECORD *)b)->domain);
-    else if (((RECORD *)a)->domain == NULL)
-        return 1;
+    else if (!strlen(((RECORD *)a)->domain))
+        return 0;
     else
         return 1;
-} */
+}
