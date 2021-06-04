@@ -19,7 +19,7 @@ int initSock(char *DNSServer)
     }
 
     //创建一个socket
-    if ((sock = socket(PF_INET, SOCK_DGRAM, 0)) == INVALID_SOCKET)
+    if ((sock = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP)) == INVALID_SOCKET)
     {
         printf("Could not create socket : %d", WSAGetLastError());
         return -1;
@@ -34,7 +34,7 @@ int initSock(char *DNSServer)
     //创建DNS服务器地址
     memset(&serverAddr, 0, sizeof(serverAddr));
     serverAddr.sin_family = AF_INET;
-    serverAddr.sin_addr.s_addr = inet_addr(DNSServer);  //通过ipconfig/all查询
+    serverAddr.sin_addr.s_addr = inet_addr(DNSServer);  //通过ipconfig /all查询
     serverAddr.sin_port = htons(PORT);
 
     //绑定sock以及对应地址
@@ -71,7 +71,7 @@ int readFile(char *localFile)
             // DNSrecord[num].ip[0] = (char *)malloc(sizeof(char) * (size + 1));
             DNSrecord[num].sum = 1;
             DNSrecord[num].recordTime = time(NULL);
-            DNSrecord[num].ttl = 120;  //默认为一小时
+            DNSrecord[num].ttl = 120;  //默认为2分钟
             strcpy(DNSrecord[num].ip[0], buffer);
             flg = 1;
             if (debugLevel == 2)
@@ -154,10 +154,10 @@ void getDomain(char *message, char *domain)
         totalLength += tmp + 1;
     }
 }
-//先这么改，不行就修改二分算法
+
 int cmp(const void *a, const void *b)
 {
-    if (!strlen(((RECORD *)a)->domain) && !strlen(((RECORD *)b)->domain))
+    if (strlen(((RECORD *)a)->domain) && strlen(((RECORD *)b)->domain))
         return strcmp(((RECORD *)a)->domain, ((RECORD *)b)->domain);
     else if (!strlen(((RECORD *)a)->domain))
         return 0;

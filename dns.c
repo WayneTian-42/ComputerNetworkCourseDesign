@@ -4,11 +4,11 @@
 #include <process.h>
 #include "dns.h"
 
-char DNSServer[16] = "202.106.0.20";
+char DNSServer[16] = "10.3.9.5";
 char localFile[100] = "D:\\VS-Code\\Vs-Code-C\\Semester_4\\computerNetwork\\DNS\\dnsrelay.txt";
 int num = 1;
 
-HANDLE hMutex;
+// HANDLE hMutex;
 
 int main(int argc, char **argv)
 {
@@ -88,7 +88,7 @@ bool isIPAddress(char *str)
 }
 void dnsRelay()
 {
-    /* unsigned  */ char message[MESSAGESIZE];
+    char message[MESSAGESIZE];
     memset(message, 0, sizeof(message));
     char ip[32];
     memset(ip, 0, sizeof(ip));
@@ -113,7 +113,7 @@ void dnsRelay()
         getHeader(&header, message);
         if (debugLevel > 1)
         {
-            printf("RECV from %s:%d(%dbytes)  \n\t", inet_ntoa(tempAddr.sin_addr), ntohs(tempAddr.sin_port), messageLength);
+            printf("\nRECV from %s:%d(%dbytes)  \n\t", inet_ntoa(tempAddr.sin_addr), ntohs(tempAddr.sin_port), messageLength);
             for (int i = 0; i < messageLength; i++)
             {
                 outputByBit(message[i]);

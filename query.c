@@ -25,7 +25,7 @@ void sendToServer(char *message, int length)
     memcpy(message, &newID, sizeof(newID));
     int sendLength = sendto(sock, message, length, 0, (SOCKADDR *)&serverAddr, sizeof(serverAddr));
     if (sendLength < 0)
-        printf("#Send Error %d\n", WSAGetLastError());
+        printf("#Send to DNS Server Error %d\n", WSAGetLastError());
     else if (debugLevel == 2)
     {
         printf("SEND to %s:%d(%dbytes)  ", inet_ntoa(serverAddr.sin_addr), ntohs(serverAddr.sin_port), sendLength);
@@ -51,7 +51,7 @@ void processMessage(char *message, HEADER *header)
     }
     memcpy(&finalType, message + off + 1, sizeof(finalType));
     // finalType = ntohs(finalType);  // 为什么不需要转换字节序？
-    // rocde不为0表示出错，但是rcode只占4字节
+    // rocde不为0表示出错
     // ANCOUNT表示回答数，finalType表示类型，为1时表示TypeA即IPV4
     if (header->RCODE || !header->ANCOUNT)
         return;
@@ -77,7 +77,7 @@ void processMessage(char *message, HEADER *header)
     else
         return;
 }
-//这里会出现莫名其妙的bug，现在应该没了
+
 void ipv4Message(char *message, int pos, int anCount, int off)
 {
     unsigned short type, class, dataLen;
@@ -107,7 +107,7 @@ void ipv4Message(char *message, int pos, int anCount, int off)
             memcpy(DNSrecord[pos].ip[count], ip, strlen(ip));
             count++;
         }
-        if (debugLevel == 2) {}
+        // if (debugLevel == 2) {}
     }
     if (count)
     {
@@ -123,21 +123,28 @@ void ipv4Message(char *message, int pos, int anCount, int off)
     }
     else
         clearRecord(pos);
-    // qsort(DNSrecord, recordNum, sizeof(RECORD), cmp);
+    qsort(DNSrecord, recordNum, sizeof(RECORD), cmp);
+    for (int i = recordNum - 1; i >= 0; i--)
+    {
+        if (strlen(DNSrecord[i].domain))
+            break;
+        else
+            recordNum--;
+    }
 }
 void snedAnswer(char *message, int length)
 {
     unsigned short newID;
-    unsigned char new[2];
+    // unsigned char new[2];
     memcpy(&newID, message, sizeof(newID));
-    memcpy(&new, message, sizeof(new));
+    // memcpy(&new, message, sizeof(new));
     unsigned short oldID = htons(userRord[ntohs(newID)].originalID);
     memcpy(message, &oldID, sizeof(oldID));
     SOCKADDR_IN sourceAddr = userRord[ntohs(newID)].userAddr;
 
     int sendLength = sendto(sock, message, length, 0, (SOCKADDR *)&(sourceAddr), sizeof(sourceAddr));
     if (sendLength < 0)
-        printf("#Send Error %d\n", WSAGetLastError());
+        printf("#Send to Client Error %d\n", WSAGetLastError());
     else if (debugLevel > 1)
     {
         newID = ntohs(newID);

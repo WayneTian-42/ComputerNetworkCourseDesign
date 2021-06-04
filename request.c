@@ -20,12 +20,13 @@ int searchLocal(char *domain, int num)
                 return mid;
             else
             {
-                time_t now = time(NULL);
+                // time_t now = time(NULL);
                 clearRecord(mid);
                 return -1;
             }
         }
     }
+    return -1;
     /* for (int i = 0; i < num; i++)
     {
         if (!strlen(DNSrecord[i].domain))
@@ -57,24 +58,26 @@ void sendBack(char *message, int pos, int length)
     memcpy(sendMessage, message, length);
 
     unsigned short tmp;
+    int flg = 1;
     if (!strcmp(DNSrecord[pos].ip[0], "0.0.0.0"))
     {
         tmp = htons(0x8183);
         memcpy(&sendMessage[2], &tmp, sizeof(tmp));
         tmp = htons(0);
         memcpy(&sendMessage[6], &tmp, sizeof(tmp));
+        flg = 0;
     }
     else
     {
-        tmp = htons(0x8580);
+        tmp = htons(0x8180);  // flag字段
         memcpy(&sendMessage[2], &tmp, sizeof(tmp));
-        tmp = htons(DNSrecord[pos].sum);
+        tmp = htons(DNSrecord[pos].sum);  // ANSCOUNT
         memcpy(&sendMessage[6], &tmp, sizeof(tmp));
     }
     //未修改Authority RR和Additional RR
 
     int i;
-    for (i = 0; i < DNSrecord[pos].sum; i++)
+    for (i = 0; flg && (i < DNSrecord[pos].sum); i++)
     {
         unsigned short name = htons(0xc00c);
         //一组ip地址占用16字节
@@ -98,7 +101,7 @@ void sendBack(char *message, int pos, int length)
 
     int sendLength = sendto(sock, sendMessage, length + i * 16, 0, (SOCKADDR *)&tempAddr, sizeof(tempAddr));
     if (sendLength < 0)
-        printf("#Send Error %d\n", WSAGetLastError());
+        printf("#Send to Client Error %d\n", WSAGetLastError());
     else if (debugLevel == 2)
     {
         printf("SEND to %s:%d(%dbytes)  \n\t", inet_ntoa(tempAddr.sin_addr), ntohs(tempAddr.sin_port), sendLength);
@@ -122,7 +125,7 @@ void sendBack(char *message, int pos, int length)
         printf("Z:%d, ", 0);
         printf("RCODE:%d\n\t", 0);
         printf("QDCOUNT:%d, ", 1);
-        printf("ANCOUNT: %d, ", DNSrecord[pos].sum);
+        printf("ANCOUNT: %d, ", DNSrecord[pos].sum * flg);
         printf("NSCOUNT:%d, ", 0);
         printf("ARCOUNT:%d\n", 0);
     }
