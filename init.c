@@ -1,11 +1,12 @@
 #include <string.h>
-#define _WINSOCK_DEPRECATED_NO_WARNINGS
-#define _CRT_SECURE_NO_WARNINGS
+/* #define _WINSOCK_DEPRECATED_NO_WARNINGS
+#define _CRT_SECURE_NO_WARNINGS */
+#define SIO_UDP_CONNRESET _WSAIOW(IOC_VENDOR, 12)
 
 #include <stdio.h>
 #include "init.h"
 
-int recordNum = 0, debugLevel = 0;
+int recordNum = 0, debugLevel = 0, ban = 0;
 
 int initSock(char *DNSServer)
 {
@@ -25,6 +26,9 @@ int initSock(char *DNSServer)
         return -1;
     }
 
+    BOOL bEnalbeConnRestError = FALSE;
+    DWORD dwBytesReturned = 0;
+    WSAIoctl(sock, SIO_UDP_CONNRESET, &bEnalbeConnRestError, sizeof(bEnalbeConnRestError), NULL, 0, &dwBytesReturned, NULL, NULL);
     //创建客户端地址
     memset(&clientAddr, 0, sizeof(clientAddr));
     clientAddr.sin_family = AF_INET;
@@ -142,7 +146,12 @@ void getDomain(char *message, char *domain)
     {
         int i = 1;
         for (; i <= nextLength; i++)
-            domain[i + totalLength - 1] = message[i + totalLength];
+        {
+            if (message[i + totalLength] <= 'Z' && message[i + totalLength] >= 'A')
+                domain[i + totalLength - 1] = message[i + totalLength] + 32;
+            else
+                domain[i + totalLength - 1] = message[i + totalLength];
+        }
         // tmp记录next，因为马上next要更新
         int tmp = nextLength;
         nextLength = message[totalLength + nextLength + 1];

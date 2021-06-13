@@ -158,7 +158,7 @@ void dnsRelay()
                 // WaitForSingleObject(hMutex, INFINITE);
                 outTime();
                 printf("%4d:", num++);
-                if (pos != -1 && type == 1)
+                if ((pos != -1 && type == 1) || ban == 1)
                     printf("* ");
                 else
                     printf("  ");
@@ -169,8 +169,11 @@ void dnsRelay()
                 printf("\n");
                 // ReleaseMutex(hMutex);
             }
-            if ((pos != -1) && (type == 1 && class == 1))  // 查找到域名且是IPv4请求
+            if ((pos != -1) && ((type == 1 && class == 1) || ban == 1))  // 查找到域名且是IPv4请求
+            {
                 sendBack(message, pos, messageLength);
+                ban = 0;
+            }
             else
                 sendToServer(message, messageLength);
         }

@@ -11,8 +11,8 @@ int changeID(char *message, unsigned char *oldID)
     do
     {
         srand(time(NULL));
-        tmp = rand() % 1000 + 1;
-    } while (userRord[tmp].originalID);
+        tmp = rand() % 65536 + 1;
+    } while (userRord[tmp].userAddr.sin_family);
     userRord[tmp].originalID = ntohs(id);
     memcpy(oldID, &id, 2);
     userRord[tmp].userAddr = tempAddr;
@@ -141,6 +141,7 @@ void snedAnswer(char *message, int length)
     unsigned short oldID = htons(userRord[ntohs(newID)].originalID);
     memcpy(message, &oldID, sizeof(oldID));
     SOCKADDR_IN sourceAddr = userRord[ntohs(newID)].userAddr;
+    memset(&userRord[ntohs(newID)], 0, sizeof(USER));
 
     int sendLength = sendto(sock, message, length, 0, (SOCKADDR *)&(sourceAddr), sizeof(sourceAddr));
     if (sendLength < 0)

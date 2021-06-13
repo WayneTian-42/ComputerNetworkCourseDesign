@@ -44,7 +44,7 @@ typedef struct
 } HEADER;
 
 // 记录数量 和 调试等级
-extern int recordNum, debugLevel;
+extern int recordNum, debugLevel, ban;
 SOCKET sock;                                   // socket
 SOCKADDR_IN clientAddr, serverAddr, tempAddr;  // 本地地址，服务器地址，临时地址
 RECORD DNSrecord[1000];                        // DNS记录

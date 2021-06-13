@@ -17,7 +17,11 @@ int searchLocal(char *domain, int num)
         else
         {
             if (DNSrecord[mid].ttl > difftime(time(NULL), DNSrecord[mid].recordTime))
+            {
+                if (!strcmp(DNSrecord[mid].ip[0], "0.0.0.0"))
+                    ban = 1;
                 return mid;
+            }
             else
             {
                 // time_t now = time(NULL);
